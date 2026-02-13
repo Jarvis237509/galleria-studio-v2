@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gallery-950 text-gallery-100 font-body antialiased;
+  }
+  
+  ::selection {
+    @apply bg-accent-gold/30 text-white;
+  }
+  
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-gallery-900;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gallery-600 rounded-full;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl;
+  }
+  
+  .gold-glow {
+    box-shadow: 0 0 40px rgba(201, 168, 76, 0.15), 0 0 80px rgba(201, 168, 76, 0.05);
+  }
+  
+  .btn-primary {
+    @apply px-6 py-3 bg-gradient-to-r from-accent-gold to-accent-copper text-gallery-950 font-semibold rounded-xl hover:shadow-lg hover:shadow-accent-gold/20 transition-all duration-300 active:scale-[0.98];
+  }
+  
+  .btn-ghost {
+    @apply px-6 py-3 border border-white/10 text-gallery-200 rounded-xl hover:bg-white/5 hover:border-white/20 transition-all duration-300;
+  }
+}
