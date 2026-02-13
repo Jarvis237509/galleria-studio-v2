@@ -1,10 +1,24 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import OpenAI from 'openai';
 import multer from 'multer';
 import fs from 'fs';
+import path from 'path';
 
 const router = Router();
-const upload = multer({ dest: 'uploads/' });
+
+// Configure multer storage
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    const uploadDir = path.join(__dirname, '..', '..', 'uploads');
+    cb(null, uploadDir);
+  },
+  filename: (_req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  }
+});
+
+const upload = multer({ storage });
+
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 interface AnalyzeRequest {
@@ -16,7 +30,7 @@ interface AnalyzeRequest {
 }
 
 // Analyze artwork and generate optimal environment prompt
-router.post('/analyze-artwork', upload.single('artwork'), async (req, res) => {
+router.post('/analyze-artwork', upload.single('artwork'), async (req: Request, res: Response) => {
   try {
     const { width, height, unit, frameStyle, matOption } = req.body as AnalyzeRequest;
     const filePath = req.file?.path;
@@ -103,7 +117,7 @@ Respond in JSON format:
 });
 
 // Generate environment image using DALL-E 3
-router.post('/generate-environment', async (req, res) => {
+router.post('/generate-environment', async (req: Request, res: Response) => {
   try {
     const { prompt, width, height, unit } = req.body;
     
@@ -127,9 +141,16 @@ router.post('/generate-environment', async (req, res) => {
       style: 'natural',
     });
 
+    const imageUrl = response.data?.[0]?.url;
+    const revisedPrompt = response.data?.[0]?.revised_prompt;
+
+    if (!imageUrl) {
+      return res.status(500).json({ error: 'Failed to generate image - no URL returned' });
+    }
+
     res.json({
-      imageUrl: response.data[0].url,
-      revisedPrompt: response.data[0].revised_prompt,
+      imageUrl,
+      revisedPrompt: revisedPrompt || enhancedPrompt,
     });
   } catch (error: any) {
     console.error('Environment generation error:', error);
