@@ -66,10 +66,17 @@ Respond in JSON:
       style: 'natural',
     });
 
+    // FIX: Handle potentially undefined data array
+    if (!dalleResponse.data || dalleResponse.data.length === 0) {
+      throw new Error('DALL-E returned no image data');
+    }
     const generatedImageUrl = dalleResponse.data[0].url;
+    if (!generatedImageUrl) {
+      throw new Error('DALL-E returned no image URL');
+    }
 
     // Step 3: Download, process, and store the frame image
-    const imageResponse = await fetch(generatedImageUrl!);
+    const imageResponse = await fetch(generatedImageUrl);
     const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
 
     // Create output directories
@@ -183,10 +190,16 @@ Respond in JSON:
 
     const imageResults = await Promise.all(imagePromises);
 
-    const variations = specs.variations.map((v: any, i: number) => ({
-      ...v,
-      imageUrl: imageResults[i].data[0].url,
-    }));
+    const variations = specs.variations.map((v: any, i: number) => {
+      const result = imageResults[i];
+      if (!result.data || result.data.length === 0) {
+        throw new Error(`DALL-E returned no image for variation: ${v.name}`);
+      }
+      return {
+        ...v,
+        imageUrl: result.data[0].url,
+      };
+    });
 
     res.json({ variations });
 
