@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Check, Wand2 } from 'lucide-react';
+import { Sparkles, Check, Wand2, Grid3X3, Globe } from 'lucide-react';
 import { useStudioStore, EnvironmentCategory } from '../store/useStudioStore';
 import { TEMPLATES, CATEGORIES } from '../data/templates';
+import AiEnvironmentGenerator from './AiEnvironmentGenerator';
 
 export default function TemplateGallery() {
   const { 
@@ -12,6 +13,8 @@ export default function TemplateGallery() {
     setEnvironmentCategory,
     useAiSuggestion,
     setUseAi,
+    environmentMode,
+    setEnvironmentMode,
   } = useStudioStore();
   
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -24,48 +27,49 @@ export default function TemplateGallery() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-xl text-gallery-100">Environment</h2>
+      </div>
+
+      {/* 3-way mode toggle */}
+      <div className="flex gap-1 p-1 bg-white/5 rounded-xl">
         <button
-          onClick={() => setUseAi(!useAiSuggestion)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm transition-all duration-300 ${
-            useAiSuggestion
-              ? 'bg-gradient-to-r from-accent-gold to-accent-copper text-gallery-950 font-semibold gold-glow'
-              : 'border border-white/10 text-gallery-400 hover:text-gallery-200 hover:border-white/20'
+          onClick={() => setEnvironmentMode('preset')}
+          className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
+            environmentMode === 'preset'
+              ? 'bg-white/10 text-gallery-200'
+              : 'text-gallery-500 hover:text-gallery-300'
           }`}
         >
-          <Wand2 className="w-4 h-4" />
-          AI Select
+          <Grid3X3 className="w-3.5 h-3.5" />
+          Templates
+        </button>
+        <button
+          onClick={() => setEnvironmentMode('ai-auto')}
+          className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
+            environmentMode === 'ai-auto'
+              ? 'bg-gradient-to-r from-accent-gold/20 to-accent-copper/20 text-accent-gold'
+              : 'text-gallery-500 hover:text-gallery-300'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          AI Auto
+        </button>
+        <button
+          onClick={() => setEnvironmentMode('ai-prompt')}
+          className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
+            environmentMode === 'ai-prompt'
+              ? 'bg-gradient-to-r from-accent-gold/20 to-accent-copper/20 text-accent-gold'
+              : 'text-gallery-500 hover:text-gallery-300'
+          }`}
+        >
+          <Wand2 className="w-3.5 h-3.5" />
+          AI Create
         </button>
       </div>
 
       <AnimatePresence mode="wait">
-        {useAiSuggestion ? (
+        {environmentMode === 'preset' ? (
           <motion.div
-            key="ai-mode"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="glass-panel p-6 text-center space-y-4"
-          >
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-accent-gold/20 to-accent-copper/20 flex items-center justify-center">
-              <Sparkles className="w-8 h-8 text-accent-gold animate-float" />
-            </div>
-            <div>
-              <h3 className="font-display text-lg text-gallery-100">AI Environment Matching</h3>
-              <p className="text-sm text-gallery-400 mt-1 max-w-md mx-auto">
-                Our AI will analyze your artwork's colors, style, and mood to select the perfect environment
-                and generate a custom prompt tailored to your piece.
-              </p>
-            </div>
-            
-            <div className="flex flex-wrap justify-center gap-2 text-xs text-gallery-500">
-              {['Color analysis', 'Style detection', 'Mood matching', 'Optimal framing'].map((f) => (
-                <span key={f} className="px-3 py-1 rounded-full bg-white/5 border border-white/5">{f}</span>
-              ))}
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="manual-mode"
+            key="preset-mode"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
@@ -144,6 +148,40 @@ export default function TemplateGallery() {
                 </motion.button>
               ))}
             </div>
+          </motion.div>
+        ) : environmentMode === 'ai-auto' ? (
+          <motion.div
+            key="ai-auto-mode"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="glass-panel p-6 text-center space-y-4"
+          >
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-accent-gold/20 to-accent-copper/20 flex items-center justify-center">
+              <Sparkles className="w-8 h-8 text-accent-gold animate-float" />
+            </div>
+            <div>
+              <h3 className="font-display text-lg text-gallery-100">AI Environment Matching</h3>
+              <p className="text-sm text-gallery-400 mt-1 max-w-md mx-auto">
+                Our AI will analyze your artwork's colors, style, and mood to select the perfect environment
+                and generate a custom prompt tailored to your piece.
+              </p>
+            </div>
+            
+            <div className="flex flex-wrap justify-center gap-2 text-xs text-gallery-500">
+              {['Color analysis', 'Style detection', 'Mood matching', 'Optimal framing'].map((f) => (
+                <span key={f} className="px-3 py-1 rounded-full bg-white/5 border border-white/5">{f}</span>
+              ))}
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="ai-prompt-mode"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <AiEnvironmentGenerator />
           </motion.div>
         )}
       </AnimatePresence>
