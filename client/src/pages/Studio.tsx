@@ -60,7 +60,7 @@ export default function Studio() {
         store.setAiPrompt(environmentPrompt);
         store.setGenerationProgress(35);
       } else if (store.environmentMode === 'ai-prompt' && store.aiGeneratedEnvironment) {
-        // User generated a custom environment — use the saved image directly
+        // User generated a custom environment — use the image URL
         environmentImageUrl = `${API_URL}${store.aiGeneratedEnvironment.imageUrl}`;
         store.setGenerationProgress(50);
         // Track usage
@@ -88,13 +88,10 @@ export default function Studio() {
       store.setGenerationProgress(75);
       toast('Compositing mockup...', { icon: '🖼️' });
 
-      // Download environment image as blob
-      const envImageResp = await axios.get(environmentImageUrl, { responseType: 'blob' });
-
-      // Build composite request
+      // Build composite request - pass environment URL directly
       const compositeForm = new FormData();
       compositeForm.append('artwork', store.artworkFile);
-      compositeForm.append('environment', envImageResp.data, 'environment.png');
+      compositeForm.append('environmentUrl', environmentImageUrl);
       compositeForm.append('width', String(store.artworkDimensions.width));
       compositeForm.append('height', String(store.artworkDimensions.height));
       compositeForm.append('unit', store.artworkDimensions.unit);
