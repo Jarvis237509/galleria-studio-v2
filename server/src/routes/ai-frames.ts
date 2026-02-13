@@ -39,24 +39,29 @@ router.post('/generate', async (req: Request, res: Response) => {
 1. Take their description and create a detailed, specific prompt for DALL-E 3 to generate a photorealistic picture frame
 2. Extract structured metadata about the frame
 
-The DALL-E prompt should describe ONLY the frame itself as a rectangular border/surround with a completely transparent or pure black empty center where the artwork goes. The frame should be shown head-on, flat, on a pure white background.
+CRITICAL requirements for the DALL-E prompt:
+- The frame must be shown perfectly HEAD-ON (90 degrees, flat perspective, no angle)
+- The center of the frame is completely TRANSPARENT/EMPTY (this is where the artwork goes)
+- The frame should appear as if floating or on a minimal background
+- The frame border should be thick enough to look substantial but not overwhelm artwork
+- Must be suitable for photorealistic compositing with interior environments
 
 Respond in JSON:
 {
-  "dallePrompt": "Detailed prompt for generating the frame image. Must specify: head-on view, rectangular frame border, empty black/dark center for artwork, white background, photorealistic, product photography style",
+  "dallePrompt": "Detailed prompt for generating the frame image. Must specify: PERFECTLY HEAD-ON view (90 degrees), rectangular frame border, transparent/empty center for artwork, photorealistic, product photography style",
   "name": "A short descriptive name for this frame (2-4 words)",
-  "material": "primary material (gold, walnut, oak, metal, marble, acrylic, reclaimed-wood, etc.)",
+  "material": "primary material",
   "cornerStyle": "mitered|rounded|ornate|carved|seamless",
   "colorPrimary": "#hex of the dominant color",
   "colorSecondary": "#hex of the secondary/accent color or null",
-  "borderWidthSuggestion": "number in pixels (8 for thin, 12-16 for standard, 20-30 for thick, 40+ for ornate)",
+  "borderWidthSuggestion": "number in pixels (6-8 thin, 12-20 standard, 25-40 thick, 50-80 ornate)",
   "tags": ["tag1", "tag2", "tag3"],
-  "description": "One sentence describing the frame for the gallery"
+  "description": "One sentence describing the frame"
 }`
         },
         {
           role: 'user',
-          content: `Create a picture frame based on this description: "${prompt}". The frame is for artwork sized ${artworkWidth}×${artworkHeight} ${unit}.`
+          content: `Create a picture frame based on: "${prompt}". The frame is for artwork sized ${artworkWidth}×${artworkHeight} ${unit}.`
         }
       ],
       max_tokens: 800,
@@ -70,14 +75,13 @@ Respond in JSON:
     console.log('[FrameGen] Step 2: Calling DALL-E 3...');
     const dalleResponse = await openai.images.generate({
       model: 'dall-e-3',
-      prompt: `${frameSpec.dallePrompt}. The frame must be shown perfectly head-on with no perspective distortion. The center of the frame is completely empty (solid black rectangle). The background outside the frame is pure white. Photorealistic product photography, studio lighting, 8K detail.`,
+      prompt: `${frameSpec.dallePrompt}. CRITICAL: Show the frame PERFECTLY HEAD-ON at exactly 90 degrees (flat perspective, no angle or tilt). The inner area of the frame is completely transparent/blank where artwork will go. Studio lighting, photorealistic, 8K detail.`,
       n: 1,
       size: '1024x1024',
       quality: 'hd',
       style: 'natural',
     });
 
-    // FIX: Handle potentially undefined data array
     if (!dalleResponse.data || dalleResponse.data.length === 0) {
       throw new Error('DALL-E returned no image data');
     }
@@ -93,10 +97,10 @@ Respond in JSON:
     if (!imageResponse.ok) {
       throw new Error(`Failed to fetch image: ${imageResponse.status} ${imageResponse.statusText}`);
     }
+    
     const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
     console.log('[FrameGen] Step 3a: Downloaded image, size:', imageBuffer.length);
 
-    // Create output directories
     const framesDir = path.join(process.cwd(), 'public', 'frames');
     fs.mkdirSync(framesDir, { recursive: true });
 
@@ -104,16 +108,15 @@ Respond in JSON:
     const filename = `${frameId}.png`;
     const thumbFilename = `${frameId}-thumb.png`;
 
-    // Save full-size frame
+    // Save full-size frame (keep original resolution)
     await sharp(imageBuffer)
-      .resize(2048, 2048, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
       .png()
       .toFile(path.join(framesDir, filename));
     console.log('[FrameGen] Step 3b: Saved full-size frame');
 
     // Generate thumbnail
     await sharp(imageBuffer)
-      .resize(256, 256, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+      .resize(256, 256, { fit: 'inside' })
       .png()
       .toFile(path.join(framesDir, thumbFilename));
     console.log('[FrameGen] Step 3c: Saved thumbnail');
@@ -178,16 +181,18 @@ router.post('/generate-variations', async (req: Request, res: Response) => {
       messages: [
         {
           role: 'system',
-          content: `You are an expert picture frame designer. Given a user's description, generate 3 distinct frame variations that interpret the request differently. Each should have a unique character.
+          content: `You are an expert picture frame designer. Given a user's description, generate 3 distinct frame variations.
+
+CRITICAL: Each frame must be shown HEAD-ON (90 degrees, flat perspective, no angle) with a transparent/empty center where artwork goes.
 
 Respond in JSON:
 {
   "variations": [
     {
-      "dallePrompt": "detailed DALL-E prompt for variation 1 — head-on frame, empty black center, white background",
+      "dallePrompt": "detailed DALL-E prompt - head-on frame, empty center",
       "name": "Short name",
       "material": "material",
-      "description": "One line describing what makes this variation unique"
+      "description": "Describe the variation"
     },
     { ... },
     { ... }
@@ -209,7 +214,7 @@ Respond in JSON:
     const imagePromises = specs.variations.map((v: any) =>
       openai.images.generate({
         model: 'dall-e-3',
-        prompt: `${v.dallePrompt}. Head-on view, empty black center, pure white background, photorealistic, 8K.`,
+        prompt: `${v.dallePrompt}. HEAD-ON view (90 degrees, flat), empty transparent center, photorealistic.`,
         n: 1,
         size: '1024x1024',
         quality: 'hd',
