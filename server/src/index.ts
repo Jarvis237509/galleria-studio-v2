@@ -7,6 +7,7 @@ import { generateRouter } from './routes/generate';
 import { aiRouter } from './routes/ai';
 import { aiFramesRouter } from './routes/ai-frames';
 import { aiEnvironmentsRouter } from './routes/ai-environments';
+import { healthRouter } from './routes/health';
 
 dotenv.config();
 
@@ -41,8 +42,9 @@ app.use('/api/generate', generateRouter);
 app.use('/api/ai', aiRouter);
 app.use('/api/ai/frames', aiFramesRouter);
 app.use('/api/ai/environments', aiEnvironmentsRouter);
+app.use('/api/health', healthRouter);
 
-// Health check
+// Simple health check (backward compat)
 app.get('/health', (_req: Request, res: Response) => res.json({ 
   status: 'ok',
   timestamp: new Date().toISOString()
