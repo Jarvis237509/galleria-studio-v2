@@ -17,16 +17,19 @@ export default function ArtworkUpload() {
     reader.readAsDataURL(file);
   }, [setArtwork]);
 
-  const { getRootProps, getInputProps } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive: dropzoneActive } = useDropzone({
     onDrop,
     accept: {
       'image/*': ['.png', '.jpg', '.jpeg', '.webp', '.tiff']
     },
     maxFiles: 1,
     maxSize: 50 * 1024 * 1024, // 50MB
-    onDragEnter: () => setIsDragActive(true),
-    onDragLeave: () => setIsDragActive(false),
   });
+
+  // Sync local state with dropzone state
+  if (dropzoneActive !== isDragActive) {
+    setIsDragActive(dropzoneActive);
+  }
 
   return (
     <div className="space-y-4">
@@ -39,20 +42,23 @@ export default function ArtworkUpload() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            {...getRootProps()}
-            className={`
-              relative cursor-pointer rounded-2xl border-2 border-dashed p-12 text-center transition-all duration-300 group
-              ${isDragActive ? 'border-accent-gold bg-accent-gold/5 scale-[1.02]' : 'border-white/10 hover:border-white/20 hover:bg-white/[0.02]'}
-            `}
           >
-            <input {...getInputProps()} />
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
-                <Upload className="w-7 h-7 text-gallery-400 group-hover:text-accent-gold transition-colors" />
-              </div>
-              <div>
-                <p className="text-gallery-200 font-medium">Drop your artwork here</p>
-                <p className="text-sm text-gallery-500 mt-1">PNG, JPG, WebP, TIFF — up to 50MB</p>
+            <div
+              {...getRootProps()}
+              className={`
+                relative cursor-pointer rounded-2xl border-2 border-dashed p-12 text-center transition-all duration-300 group
+                ${isDragActive ? 'border-accent-gold bg-accent-gold/5 scale-[1.02]' : 'border-white/10 hover:border-white/20 hover:bg-white/[0.02]'}
+              `}
+            >
+              <input {...getInputProps()} />
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+                  <Upload className="w-7 h-7 text-gallery-400 group-hover:text-accent-gold transition-colors" />
+                </div>
+                <div>
+                  <p className="text-gallery-200 font-medium">Drop your artwork here</p>
+                  <p className="text-sm text-gallery-500 mt-1">PNG, JPG, WebP, TIFF — up to 50MB</p>
+                </div>
               </div>
             </div>
           </motion.div>
