@@ -20,6 +20,41 @@ export interface TemplateConfig {
   lighting?: string;
 }
 
+// NEW: AI Generated Frame Types
+export interface AiGeneratedFrame {
+  id: string;
+  name: string;
+  prompt: string;
+  imageUrl: string;
+  thumbnailUrl?: string;
+  borderWidth: number;
+  cornerStyle: string;
+  material?: string;
+  colorPrimary?: string;
+  colorSecondary?: string;
+  tags: string[];
+  createdAt: string;
+}
+
+// NEW: AI Generated Environment Types  
+export interface AiGeneratedEnvironment {
+  id: string;
+  name: string;
+  prompt: string;
+  imageUrl: string;
+  thumbnailUrl?: string;
+  category: string;
+  wallColor?: string;
+  lighting?: string;
+  mood?: string;
+  tags: string[];
+  createdAt: string;
+}
+
+// NEW: Mode Types
+export type FrameMode = 'preset' | 'ai-generate' | 'saved';
+export type EnvironmentMode = 'preset' | 'ai-auto' | 'ai-prompt' | 'saved';
+
 interface StudioState {
   // Artwork
   artworkFile: File | null;
@@ -28,7 +63,7 @@ interface StudioState {
   // Frame
   frameStyle: FrameStyle;
   matOption: MatOption;
-  matWidth: number; // in inches
+  matWidth: number;
   // Environment
   selectedTemplate: TemplateConfig | null;
   environmentCategory: EnvironmentCategory | null;
@@ -38,6 +73,20 @@ interface StudioState {
   generatedMockup: string | null;
   isGenerating: boolean;
   generationProgress: number;
+  // NEW: Frame Mode
+  frameMode: FrameMode;
+  aiFramePrompt: string;
+  aiGeneratedFrame: AiGeneratedFrame | null;
+  aiFrameVariations: AiGeneratedFrame[];
+  savedFrames: AiGeneratedFrame[];
+  isGeneratingFrame: boolean;
+  // NEW: Environment Mode
+  environmentMode: EnvironmentMode;
+  aiEnvironmentPrompt: string;
+  aiGeneratedEnvironment: AiGeneratedEnvironment | null;
+  aiEnvironmentVariations: AiGeneratedEnvironment[];
+  savedEnvironments: AiGeneratedEnvironment[];
+  isGeneratingEnvironment: boolean;
   // Actions
   setArtwork: (file: File, preview: string) => void;
   setDimensions: (dims: Partial<ArtworkDimensions>) => void;
@@ -51,6 +100,21 @@ interface StudioState {
   setGeneratedMockup: (url: string) => void;
   setIsGenerating: (loading: boolean) => void;
   setProgress: (progress: number) => void;
+  // NEW: Frame Mode Actions
+  setFrameMode: (mode: FrameMode) => void;
+  setAiFramePrompt: (prompt: string) => void;
+  setAiGeneratedFrame: (frame: AiGeneratedFrame | null) => void;
+  setAiFrameVariations: (variations: AiGeneratedFrame[]) => void;
+  setSavedFrames: (frames: AiGeneratedFrame[]) => void;
+  setIsGeneratingFrame: (loading: boolean) => void;
+  // NEW: Environment Mode Actions
+  setEnvironmentMode: (mode: EnvironmentMode) => void;
+  setAiEnvironmentPrompt: (prompt: string) => void;
+  setAiGeneratedEnvironment: (env: AiGeneratedEnvironment | null) => void;
+  setAiEnvironmentVariations: (variations: AiGeneratedEnvironment[]) => void;
+  setSavedEnvironments: (envs: AiGeneratedEnvironment[]) => void;
+  setIsGeneratingEnvironment: (loading: boolean) => void;
+  // Reset
   reset: () => void;
 }
 
@@ -68,6 +132,19 @@ const initialState = {
   generatedMockup: null as string | null,
   isGenerating: false,
   generationProgress: 0,
+  // NEW initial state
+  frameMode: 'preset' as FrameMode,
+  aiFramePrompt: '',
+  aiGeneratedFrame: null as AiGeneratedFrame | null,
+  aiFrameVariations: [] as AiGeneratedFrame[],
+  savedFrames: [] as AiGeneratedFrame[],
+  isGeneratingFrame: false,
+  environmentMode: 'preset' as EnvironmentMode,
+  aiEnvironmentPrompt: '',
+  aiGeneratedEnvironment: null as AiGeneratedEnvironment | null,
+  aiEnvironmentVariations: [] as AiGeneratedEnvironment[],
+  savedEnvironments: [] as AiGeneratedEnvironment[],
+  isGeneratingEnvironment: false,
 };
 
 export const useStudioStore = create<StudioState>((set) => ({
@@ -84,5 +161,18 @@ export const useStudioStore = create<StudioState>((set) => ({
   setGeneratedMockup: (url) => set({ generatedMockup: url }),
   setIsGenerating: (loading) => set({ isGenerating: loading }),
   setProgress: (progress) => set({ generationProgress: progress }),
+  // NEW actions
+  setFrameMode: (mode) => set({ frameMode: mode }),
+  setAiFramePrompt: (prompt) => set({ aiFramePrompt: prompt }),
+  setAiGeneratedFrame: (frame) => set({ aiGeneratedFrame: frame }),
+  setAiFrameVariations: (variations) => set({ aiFrameVariations: variations }),
+  setSavedFrames: (frames) => set({ savedFrames: frames }),
+  setIsGeneratingFrame: (loading) => set({ isGeneratingFrame: loading }),
+  setEnvironmentMode: (mode) => set({ environmentMode: mode }),
+  setAiEnvironmentPrompt: (prompt) => set({ aiEnvironmentPrompt: prompt }),
+  setAiGeneratedEnvironment: (env) => set({ aiGeneratedEnvironment: env }),
+  setAiEnvironmentVariations: (variations) => set({ aiEnvironmentVariations: variations }),
+  setSavedEnvironments: (envs) => set({ savedEnvironments: envs }),
+  setIsGeneratingEnvironment: (loading) => set({ isGeneratingEnvironment: loading }),
   reset: () => set(initialState),
 }));
