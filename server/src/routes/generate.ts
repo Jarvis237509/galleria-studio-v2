@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import sharp from 'sharp';
 import fs from 'fs';
@@ -89,10 +89,19 @@ async function createFramedArtwork(
   return result;
 }
 
+// Configure multer for file uploads
+const upload = multer({ 
+  dest: path.join(__dirname, '..', '..', 'uploads') 
+});
+
 // Composite artwork onto environment using Sharp
-router.post('/composite', async (req, res) => {
-  const artworkFile: any = (req as any).files?.artwork?.[0];
-  const environmentFile: any = (req as any).files?.environment?.[0];
+router.post('/composite', upload.fields([
+  { name: 'artwork', maxCount: 1 },
+  { name: 'environment', maxCount: 1 },
+]), async (req: Request, res: Response) => {
+  const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+  const artworkFile = files?.artwork?.[0];
+  const environmentFile = files?.environment?.[0];
   
   if (!artworkFile || !environmentFile) {
     return res.status(400).json({ error: 'Both artwork and environment images required' });
@@ -109,12 +118,12 @@ router.post('/composite', async (req, res) => {
     // Calculate artwork pixel size relative to environment
     // Assume a standard wall is ~120" wide for a 1920px image
     const pxPerInch = envWidth / 120;
-    const artW = Math.round(parseFloat(width) * pxPerInch * parseFloat(scale));
-    const artH = Math.round(parseFloat(height) * pxPerInch * parseFloat(scale));
+    const artW = Math.round(parseFloat(width) * pxPerInch * parseFloat(scale as string));
+    const artH = Math.round(parseFloat(height) * pxPerInch * parseFloat(scale as string));
 
     // Frame dimensions
     const frameCfg = getFrameConfig(frameStyle);
-    const matPx = matOption !== 'none' ? Math.round(parseFloat(matWidth) * pxPerInch) : 0;
+    const matPx = matOption !== 'none' ? Math.round(parseFloat(matWidth as string) * pxPerInch) : 0;
     const totalFrameW = frameCfg.width;
     const totalW = artW + (matPx * 2) + (totalFrameW * 2);
     const totalH = artH + (matPx * 2) + (totalFrameW * 2);
@@ -137,8 +146,8 @@ router.post('/composite', async (req, res) => {
     );
 
     // Position on environment
-    const left = Math.round((parseFloat(posX) / 100) * envWidth - totalW / 2);
-    const top = Math.round((parseFloat(posY) / 100) * envHeight - totalH / 2);
+    const left = Math.round((parseFloat(posX as string) / 100) * envWidth - totalW / 2);
+    const top = Math.round((parseFloat(posY as string) / 100) * envHeight - totalH / 2);
 
     // Composite
     const result = await sharp(environmentFile.path)
@@ -153,8 +162,8 @@ router.post('/composite', async (req, res) => {
       .toBuffer();
 
     const outputId = uuid();
-    const outputPath = path.join('outputs', `${outputId}.jpg`);
-    fs.mkdirSync('outputs', { recursive: true });
+    const outputPath = path.join(__dirname, '..', '..', 'outputs', `${outputId}.jpg`);
+    fs.mkdirSync(path.dirname(outputPath), { recursive: true });
     fs.writeFileSync(outputPath, result);
 
     // Clean up temp files
