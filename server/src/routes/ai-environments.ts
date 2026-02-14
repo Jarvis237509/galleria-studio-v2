@@ -66,7 +66,7 @@ Respond in JSON:
 });
 
 // Generate environment from text prompt
-router.post('/generate-environment', async (req: Request, res: Response) => {
+router.post('/generate', async (req: Request, res: Response) => {
   try {
     const { prompt, userId, artworkWidth, artworkHeight, unit } = req.body;
     
